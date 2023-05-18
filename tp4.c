@@ -4,8 +4,20 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
+#include <ctype.h>
 #include "tp4.h"
 
+int strcmpSansCasse(char* str1, char* str2) {
+    while (*str1 && *str2) {
+        if (tolower(*str1) != tolower(*str2)) {
+            return *str1 - *str2;
+        }
+        str1++;
+        str2++;
+    }
+    return *str1 - *str2;
+}
 
 T_Position *creerPosition(int ligne, int ordre, int phrase) {
 

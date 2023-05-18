@@ -5,13 +5,13 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <ctype.h>
 #include "tp4.h"
 
 
 int main() {
     char *premierMot = "bonjour";
     char *secondMot = "Bonjour";
-    char *troisiemeMot = "Test";
-    printf("\n%d", strcmp(premierMot, secondMot));  // test
+    printf("\n%d", strcmpSansCasse(premierMot, secondMot));
     return 0;
 }

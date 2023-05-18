@@ -32,6 +32,7 @@ struct Index {
 };
 
 // FONCTIONS DE BASE
+int strcmpSansCasse(char* str1, char* str2);
 
 T_Position *creerPosition(int ligne, int ordre, int phrase);
 
