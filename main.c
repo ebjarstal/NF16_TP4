@@ -9,6 +9,9 @@
 
 
 int main() {
-    testAjouterPosition();
+    char *premierMot = "bonjour";
+    char *secondMot = "Bonjour";
+    char *troisiemeMot = "Test";
+    printf("\n%d", strcmp(premierMot, secondMot));  // test
     return 0;
 }

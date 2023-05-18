@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include "tp4.h"
 
+
 T_Position *creerPosition(int ligne, int ordre, int phrase) {
 
     // création de l'instance de la position à ajouter
