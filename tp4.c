@@ -127,9 +127,29 @@ int ajouterOccurence(T_Index *index, char *mot, int ligne, int ordre, int phrase
             index->nbMotsTotal++;
             return 1;
         }
-        if (comparaison <0) {
-
+        else if (comparaison < 0) {
+            if (noeudCourant->filsGauche) {
+                noeudCourant = noeudCourant->filsGauche;
+            }
+            else {
+                noeudCourant->filsGauche = noeud;
+                index->nbMotsDistincts++;
+                index->nbMotsTotal++;
+                return 1;
+            }
+        }
+        else {
+            if (noeudCourant->filsDroit) {
+                noeudCourant = noeudCourant->filsDroit;
+            }
+            else {
+                noeudCourant->filsDroit = noeud;
+                index->nbMotsDistincts++;
+                index->nbMotsTotal++;
+                return 1;
+            }
         }
     }
-
+    printf("\nErreur ajouterOccurence(): occurrence a pas pu etre ajoutee");
+    return 0;
 }
