@@ -35,6 +35,7 @@ struct Index {
 int strcmpSansCasse(char* str1, char* str2);
 
 T_Position *creerPosition(int ligne, int ordre, int phrase);
+T_Noeud *creerNoeud(char* mot);
 
 // permet d’ajouter un élément dans une liste de positions triées
 T_Position *ajouterPosition(T_Position *listeP, int ligne, int ordre, int phrase);

@@ -8,6 +8,7 @@
 #include <ctype.h>
 #include "tp4.h"
 
+
 int strcmpSansCasse(char* str1, char* str2) {
     while (*str1 && *str2) {
         if (tolower(*str1) != tolower(*str2)) {
@@ -35,6 +36,24 @@ T_Position *creerPosition(int ligne, int ordre, int phrase) {
     nouvellePosition->suivant = NULL;
 
     return nouvellePosition;
+}
+
+T_Noeud *creerNoeud(char* mot) {
+
+    T_Noeud *nouveauNoeud = malloc(sizeof(T_Noeud));
+    if (!nouveauNoeud) {
+        printf("\nErreur creation nouvelle instance T_Noeud");
+        return NULL;
+    }
+
+    // initialisation des attributs
+    strcpy(nouveauNoeud->mot, mot);
+    nouveauNoeud->nbOccurrences = 1;
+    nouveauNoeud->listePositions = NULL;
+    nouveauNoeud->filsDroit = NULL;
+    nouveauNoeud->filsGauche = NULL;
+
+    return nouveauNoeud;
 }
 
 T_Position *ajouterPosition(T_Position *listeP, int ligne, int ordre, int phrase) {
@@ -78,4 +97,39 @@ T_Position *ajouterPosition(T_Position *listeP, int ligne, int ordre, int phrase
     }
 
     return premierElement;
+}
+
+int ajouterOccurence(T_Index *index, char *mot, int ligne, int ordre, int phrase) {
+
+    int comparaison = 0;
+
+    if (!index || !mot) {
+        printf("\nErreur ajouterOccurence(): index ou mot existe pas.");
+        return 0;
+    }
+
+    T_Noeud *noeud = creerNoeud(mot);
+    noeud->listePositions = creerPosition(ligne, ordre, phrase);
+
+    if (!index->racine) {
+        index->racine = noeud;
+        index->nbMotsDistincts = 1;
+        index->nbMotsTotal = 1;
+        return 1;
+    }
+
+    T_Noeud *noeudCourant = index->racine;
+    while (noeudCourant) {
+        comparaison = strcmpSansCasse(mot, noeudCourant->mot);
+        if (comparaison == 0) {
+            noeudCourant->nbOccurrences++;
+            noeudCourant->listePositions = ajouterPosition(noeudCourant->listePositions, ligne, ordre, phrase);
+            index->nbMotsTotal++;
+            return 1;
+        }
+        if (comparaison <0) {
+
+        }
+    }
+
 }
