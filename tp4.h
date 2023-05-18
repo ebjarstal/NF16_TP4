@@ -38,4 +38,6 @@ T_Position *creerPosition(int ligne, int ordre, int phrase);
 // permet d’ajouter un élément dans une liste de positions triées
 T_Position *ajouterPosition(T_Position *listeP, int ligne, int ordre, int phrase);
 
+int ajouterOccurence(T_Index *index, char *mot, int ligne, int ordre, int phrase);
+
 #endif //NF16_TP4_TP4_H
