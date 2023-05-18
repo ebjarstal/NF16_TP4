@@ -47,7 +47,7 @@ T_Noeud *creerNoeud(char* mot) {
     }
 
     // initialisation des attributs
-    strcpy(nouveauNoeud->mot, mot);
+    nouveauNoeud->mot = strdup(mot);
     nouveauNoeud->nbOccurrences = 1;
     nouveauNoeud->listePositions = NULL;
     nouveauNoeud->filsDroit = NULL;
@@ -100,11 +100,10 @@ T_Position *ajouterPosition(T_Position *listeP, int ligne, int ordre, int phrase
 }
 
 int ajouterOccurence(T_Index *index, char *mot, int ligne, int ordre, int phrase) {
-
     int comparaison = 0;
 
     if (!index || !mot) {
-        printf("\nErreur ajouterOccurence(): index ou mot existe pas.");
+        printf("\nErreur ajouterOccurence(): index ou mot n'existe pas.");
         return 0;
     }
 
@@ -117,11 +116,23 @@ int ajouterOccurence(T_Index *index, char *mot, int ligne, int ordre, int phrase
         index->nbMotsTotal = 1;
         return 1;
     }
-
     T_Noeud *noeudCourant = index->racine;
     while (noeudCourant) {
         comparaison = strcmpSansCasse(mot, noeudCourant->mot);
         if (comparaison == 0) {
+            // Vérifier si la position existe déjà dans la liste des positions du mot
+            T_Position* positionCourante = noeudCourant->listePositions;
+            while (positionCourante) {
+                if (positionCourante->numeroLigne == ligne &&
+                    positionCourante->ordre == ordre &&
+                    positionCourante->numeroPhrase == phrase) {
+                    // La position existe déjà, aucune action nécessaire
+                    return 1;
+                }
+                positionCourante = positionCourante->suivant;
+            }
+
+            // La position n'existe pas, ajouter la nouvelle position
             noeudCourant->nbOccurrences++;
             noeudCourant->listePositions = ajouterPosition(noeudCourant->listePositions, ligne, ordre, phrase);
             index->nbMotsTotal++;
@@ -150,6 +161,6 @@ int ajouterOccurence(T_Index *index, char *mot, int ligne, int ordre, int phrase
             }
         }
     }
-    printf("\nErreur ajouterOccurence(): occurrence a pas pu etre ajoutee");
+    printf("\nErreur ajouterOccurence(): l'occurrence n'a pas pu être ajoutée.");
     return 0;
 }
