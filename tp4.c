@@ -103,7 +103,7 @@ int ajouterOccurence(T_Index *index, char *mot, int ligne, int ordre, int phrase
     int comparaison = 0;
 
     if (!index || !mot) {
-        printf("\nErreur ajouterOccurence(): index ou mot n'existe pas.");
+        printf("\nErreur ajouterOccurence(): index ou mot existe pas.");
         return 0;
     }
 
@@ -161,6 +161,34 @@ int ajouterOccurence(T_Index *index, char *mot, int ligne, int ordre, int phrase
             }
         }
     }
-    printf("\nErreur ajouterOccurence(): l'occurrence n'a pas pu être ajoutée.");
+    printf("\nErreur ajouterOccurence(): occurrence a pas pu être ajoutee");
     return 0;
+}
+
+// renvoie -1 si erreur
+int indexerFichier(T_Index *index, char *filename) {
+
+    int nbMots = 0, numLigne = 1, ordre = 1, numPhrase = 1, tailleMot = 0;
+    char mot[TAILLE_MAX_MOT];
+    char c;
+
+    FILE *fichier;
+    fichier = fopen(filename, "r");
+
+    if (fichier == NULL) {
+        printf("\nErreur indexerFichier(): %s a pas pu etre ouvert", filename);
+        return -1;
+    }
+
+    c = fgetc(fichier);
+    while (c != EOF) {
+        if (c == '\n') {numLigne++; ordre = 1; numPhrase = 1; tailleMot = 0;}  // si retour à la ligne
+        else if (c == ' ') {ordre++; tailleMot = 0;}  // si espace -> passage au prochain mot
+        else if (c == '.') {numPhrase++; ordre++; tailleMot = 0;}  // si point -> prochaine phrase et nouveau mot
+        else {mot[tailleMot] = c;}  // sinon, ajouter c au mot
+        c = fgetc(fichier);
+    }
+
+    fclose(fichier);
+    return nbMots;
 }

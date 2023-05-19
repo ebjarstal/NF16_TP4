@@ -4,6 +4,7 @@
 
 #ifndef NF16_TP4_TP4_H
 #define NF16_TP4_TP4_H
+#define TAILLE_MAX_MOT 100
 
 // STRUCTURES DE DONNEES
 
@@ -41,5 +42,7 @@ T_Noeud *creerNoeud(char* mot);
 T_Position *ajouterPosition(T_Position *listeP, int ligne, int ordre, int phrase);
 
 int ajouterOccurence(T_Index *index, char *mot, int ligne, int ordre, int phrase);
+
+int indexerFichier(T_Index *index, char *filename);
 
 #endif //NF16_TP4_TP4_H
