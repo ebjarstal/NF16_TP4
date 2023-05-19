@@ -166,11 +166,13 @@ int ajouterOccurence(T_Index *index, char *mot, int ligne, int ordre, int phrase
 }
 
 // renvoie -1 si erreur
+// la fonction marche mal si le dernier caractère n'est pas un point, un espace ou un \n
+// A régler
 int indexerFichier(T_Index *index, char *filename) {
 
     int nbMots = 0, numLigne = 1, ordre = 1, numPhrase = 1, tailleMot = 0;
     char mot[TAILLE_MAX_MOT];
-    char c;
+    char c, suivant;
 
     FILE *fichier;
     fichier = fopen(filename, "r");
@@ -182,10 +184,24 @@ int indexerFichier(T_Index *index, char *filename) {
 
     c = fgetc(fichier);
     while (c != EOF) {
-        if (c == '\n') {numLigne++; ordre = 1; numPhrase = 1; tailleMot = 0;}  // si retour à la ligne
+
+        if (c == '\n' || c == ' ' || c == '.') {  // si on a terminé un mot
+
+            suivant = fgetc(fichier);
+            while (suivant == '\n' || suivant == ' ' || suivant == '.') {suivant = fgetc(fichier);}
+            ungetc(suivant, fichier);
+
+            mot[tailleMot] = '\0';
+//            printf("\nAjout de %s", mot);
+            ajouterOccurence(index, mot, numLigne, ordre, numPhrase);
+            nbMots++;
+        }
+
+        if (c == '\n') {numLigne++; ordre = 1; numPhrase = 1; tailleMot = 0;}  // si retour à la ligne -> nouvelle ligne et nouveau mot
         else if (c == ' ') {ordre++; tailleMot = 0;}  // si espace -> passage au prochain mot
         else if (c == '.') {numPhrase++; ordre++; tailleMot = 0;}  // si point -> prochaine phrase et nouveau mot
-        else {mot[tailleMot] = c;}  // sinon, ajouter c au mot
+        else {mot[tailleMot] = c; tailleMot++;}  // sinon, ajouter c au mot et incrémenter tailleMot
+
         c = fgetc(fichier);
     }
 
