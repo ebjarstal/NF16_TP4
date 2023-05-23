@@ -39,7 +39,6 @@ T_Position *creerPosition(int ligne, int ordre, int phrase) {
 }
 
 T_Noeud *creerNoeud(char* mot) {
-
     T_Noeud *nouveauNoeud = malloc(sizeof(T_Noeud));
     if (!nouveauNoeud) {
         printf("\nErreur creation nouvelle instance T_Noeud");
@@ -48,6 +47,11 @@ T_Noeud *creerNoeud(char* mot) {
 
     // initialisation des attributs
     nouveauNoeud->mot = strdup(mot);
+    if (!nouveauNoeud->mot) {
+        free(nouveauNoeud); // Libérer la mémoire allouée pour le nouveau nœud
+        printf("\nErreur creation nouvelle instance T_Noeud");
+        return NULL;
+    }
     nouveauNoeud->nbOccurrences = 1;
     nouveauNoeud->listePositions = NULL;
     nouveauNoeud->filsDroit = NULL;
@@ -56,48 +60,43 @@ T_Noeud *creerNoeud(char* mot) {
     return nouveauNoeud;
 }
 
+
 T_Position *ajouterPosition(T_Position *listeP, int ligne, int ordre, int phrase) {
-
     T_Position *premierElement = listeP;
-
-    // création de l'instance de la position à ajouter
     T_Position *position_a_ajouter = creerPosition(ligne, ordre, phrase);
 
-    // si listeP est vide
-    if (!listeP) {
-        premierElement = position_a_ajouter;
-        return premierElement;
+    if (!position_a_ajouter) {
+        return premierElement; // Retourner la liste d'origine sans modification
     }
 
-    // s'il faut placer le nouvel élément au début de listeP
-    if (position_a_ajouter->numeroLigne <= listeP->numeroLigne && position_a_ajouter->ordre <= listeP->ordre) {
-        position_a_ajouter->suivant = premierElement;
-        premierElement = position_a_ajouter;
-        return premierElement;
+    // Si listeP est vide ou si la position doit être placée en tête de liste
+    if (!listeP || (ligne < listeP->numeroLigne) || (ligne == listeP->numeroLigne && ordre <= listeP->ordre)) {
+        position_a_ajouter->suivant = listeP;
+        return position_a_ajouter;
     }
 
-    while (listeP) {
+    T_Position *precedent = NULL;
+    T_Position *courant = listeP;
 
-        // s'il faut placer le nouvel élément à la fin de listeP
-        if (!(listeP->suivant)) {
-            listeP->suivant = position_a_ajouter;
-            return premierElement;
-        }
-
-        // ici, on sait que listeP suivant existe
-        if (position_a_ajouter->numeroLigne <= listeP->suivant->numeroLigne) {
-            if (position_a_ajouter->ordre <= listeP->suivant->ordre) {
-                position_a_ajouter->suivant = listeP->suivant;
-                listeP->suivant = position_a_ajouter;
+    while (courant) {
+        if ((ligne < courant->numeroLigne) || (ligne == courant->numeroLigne && ordre <= courant->ordre)) {
+            position_a_ajouter->suivant = courant;
+            if (precedent) {
+                precedent->suivant = position_a_ajouter;
                 return premierElement;
+            } else {
+                return position_a_ajouter;
             }
         }
 
-        listeP = listeP->suivant;
+        precedent = courant;
+        courant = courant->suivant;
     }
 
+    precedent->suivant = position_a_ajouter;
     return premierElement;
 }
+
 
 int ajouterOccurence(T_Index *index, char *mot, int ligne, int ordre, int phrase) {
     int comparaison = 0;
@@ -169,7 +168,6 @@ int ajouterOccurence(T_Index *index, char *mot, int ligne, int ordre, int phrase
 // la fonction marche mal si le dernier caractère n'est pas un point, un espace ou un \n
 // A régler
 int indexerFichier(T_Index *index, char *filename) {
-
     int nbMots = 0, numLigne = 1, ordre = 1, numPhrase = 1, tailleMot = 0;
     char mot[TAILLE_MAX_MOT];
     char c, suivant;
@@ -178,33 +176,96 @@ int indexerFichier(T_Index *index, char *filename) {
     fichier = fopen(filename, "r");
 
     if (fichier == NULL) {
-        printf("\nErreur indexerFichier(): %s a pas pu etre ouvert", filename);
+        printf("\nErreur indexerFichier(): %s n'a pas pu être ouvert", filename);
         return -1;
     }
 
     c = fgetc(fichier);
     while (c != EOF) {
-
         if (c == '\n' || c == ' ' || c == '.') {  // si on a terminé un mot
-
-            suivant = fgetc(fichier);
-            while (suivant == '\n' || suivant == ' ' || suivant == '.') {suivant = fgetc(fichier);}
-            ungetc(suivant, fichier);
-
             mot[tailleMot] = '\0';
-//            printf("\nAjout de %s", mot);
-            ajouterOccurence(index, mot, numLigne, ordre, numPhrase);
-            nbMots++;
+            if (mot[0] != '\0') {
+                ajouterOccurence(index, mot, numLigne, ordre, numPhrase);
+                nbMots++;
+            }
+            ordre++;
+            tailleMot = 0;
+        } else if (isalpha(c)) {  // si c'est une lettre
+            mot[tailleMot] = c;
+            tailleMot++;
+        } else if (c == '\"' || c == '\'') {  // si c'est un guillemet
+            mot[tailleMot] = c;
+            tailleMot++;
+            suivant = fgetc(fichier);
+            while (suivant != c) {
+                mot[tailleMot] = suivant;
+                tailleMot++;
+                suivant = fgetc(fichier);
+            }
+            mot[tailleMot] = suivant;
+            tailleMot++;
+        } else if (c == '?') {  // si c'est un point d'interrogation
+            numPhrase++;
         }
 
-        if (c == '\n') {numLigne++; ordre = 1; numPhrase = 1; tailleMot = 0;}  // si retour à la ligne -> nouvelle ligne et nouveau mot
-        else if (c == ' ') {ordre++; tailleMot = 0;}  // si espace -> passage au prochain mot
-        else if (c == '.') {numPhrase++; ordre++; tailleMot = 0;}  // si point -> prochaine phrase et nouveau mot
-        else {mot[tailleMot] = c; tailleMot++;}  // sinon, ajouter c au mot et incrémenter tailleMot
+        if (c == '\n') {  // si on a terminé une ligne
+            numLigne++;
+            ordre = 1;
+        }
 
         c = fgetc(fichier);
     }
 
     fclose(fichier);
+
     return nbMots;
 }
+
+
+void afficherIndex(T_Index index) {
+    if (index.racine == NULL) {
+        printf("\nErreur afficherIndex(): index vide");
+        return;
+    }
+    T_Noeud *noeud = index.racine;
+    while (noeud->filsGauche) {
+        noeud = noeud->filsGauche;
+    }
+    printf("\n%c", toupper(noeud->mot[0]));
+    afficherMots(index.racine, noeud->mot[0]);
+}
+
+void afficherMots(T_Noeud *noeud, char premiereLettrePrecedente) {
+    if (noeud != NULL) {
+        // affiche les mots du sous-arbre gauche (mots inférieurs)
+        if (noeud->filsGauche != NULL) {
+            afficherMots(noeud->filsGauche, premiereLettrePrecedente);
+        }
+
+        if (tolower(noeud->mot[0]) != tolower(premiereLettrePrecedente)) {
+            printf("\n\n%c", toupper(noeud->mot[0]));  // convertit la lettre en majuscule pour l'affichage
+            premiereLettrePrecedente = noeud->mot[0];
+        }
+
+        // affiche le mot courant et ses informations
+        printf("\n|-- %s", noeud->mot);
+        afficherPositions(noeud->listePositions);
+
+        // affiche les mots du sous-arbre droit (mots supérieurs)
+        if (noeud->filsDroit != NULL) {
+            afficherMots(noeud->filsDroit, premiereLettrePrecedente);
+        }
+    }
+}
+
+
+void afficherPositions(T_Position *listeP) {
+    T_Position *position = listeP;
+
+    while (position != NULL) {
+        printf("\n|--- (l:%d, o:%d, p:%d) ", position->numeroLigne, position->ordre, position->numeroPhrase);
+        position = position->suivant;
+    }
+    printf("\n|");
+}
+

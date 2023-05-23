@@ -8,7 +8,7 @@
 #include <ctype.h>
 #include "tp4.h"
 
-void test_indexerFichier() {
+void test() {
     T_Index index;
     index.racine = NULL;
     index.nbMotsDistincts = 0;
@@ -25,9 +25,11 @@ void test_indexerFichier() {
     printf("\nNombre total de mots : %d", result);
     printf("\nNombre de mots distincts : %d", index.nbMotsDistincts);
     printf("\nIndexation terminée.");
+    afficherIndex(index);
 }
 
+
 int main() {
-    test_indexerFichier();
+    test();
     return 0;
 }
