@@ -46,7 +46,12 @@ int ajouterOccurence(T_Index *index, char *mot, int ligne, int ordre, int phrase
 int indexerFichier(T_Index *index, char *filename);
 
 void afficherIndex(T_Index index);
-void afficherMots(T_Noeud *noeud, char premiereLettrePrecedente);
+void afficherMots(T_Noeud *noeud, char *derniereLettre);
 void afficherPositions(T_Position *listeP);
+void afficherOccurrencesMot(T_Index index, char *mot);
+
+T_Noeud *rechercherMot(T_Index index, char *mot);
+
+
 
 #endif //NF16_TP4_TP4_H

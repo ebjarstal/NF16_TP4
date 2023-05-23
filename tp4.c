@@ -48,7 +48,7 @@ T_Noeud *creerNoeud(char* mot) {
     // initialisation des attributs
     nouveauNoeud->mot = strdup(mot);
     if (!nouveauNoeud->mot) {
-        free(nouveauNoeud); // Libérer la mémoire allouée pour le nouveau nœud
+        free(nouveauNoeud); // libère la mémoire allouée pour le nouveau nœud
         printf("\nErreur creation nouvelle instance T_Noeud");
         return NULL;
     }
@@ -60,6 +60,14 @@ T_Noeud *creerNoeud(char* mot) {
     return nouveauNoeud;
 }
 
+T_Index creerIndexTemporaire(T_Noeud* racine, int nbMotsDistincts, int nbMotsTotal) {
+    T_Index nouveauIndex;
+    nouveauIndex.racine = racine;
+    nouveauIndex.nbMotsDistincts = nbMotsDistincts;
+    nouveauIndex.nbMotsTotal = nbMotsTotal;
+
+    return nouveauIndex;
+}
 
 T_Position *ajouterPosition(T_Position *listeP, int ligne, int ordre, int phrase) {
     T_Position *premierElement = listeP;
@@ -185,6 +193,7 @@ int indexerFichier(T_Index *index, char *filename) {
         if (c == '\n' || c == ' ' || c == '.') {  // si on a terminé un mot
             mot[tailleMot] = '\0';
             if (mot[0] != '\0') {
+                printf("\najout de %s a index", mot);
                 ajouterOccurence(index, mot, numLigne, ordre, numPhrase);
                 nbMots++;
             }
@@ -232,31 +241,31 @@ void afficherIndex(T_Index index) {
         noeud = noeud->filsGauche;
     }
     printf("\n%c", toupper(noeud->mot[0]));
-    afficherMots(index.racine, noeud->mot[0]);
+    afficherMots(index.racine, &noeud->mot[0]);
 }
 
-void afficherMots(T_Noeud *noeud, char premiereLettrePrecedente) {
-    if (noeud != NULL) {
-        // affiche les mots du sous-arbre gauche (mots inférieurs)
-        if (noeud->filsGauche != NULL) {
-            afficherMots(noeud->filsGauche, premiereLettrePrecedente);
-        }
-
-        if (tolower(noeud->mot[0]) != tolower(premiereLettrePrecedente)) {
-            printf("\n\n%c", toupper(noeud->mot[0]));  // convertit la lettre en majuscule pour l'affichage
-            premiereLettrePrecedente = noeud->mot[0];
-        }
-
-        // affiche le mot courant et ses informations
-        printf("\n|-- %s", noeud->mot);
-        afficherPositions(noeud->listePositions);
-
-        // affiche les mots du sous-arbre droit (mots supérieurs)
-        if (noeud->filsDroit != NULL) {
-            afficherMots(noeud->filsDroit, premiereLettrePrecedente);
-        }
-    }
-}
+//void afficherMots(T_Noeud *noeud, char premiereLettrePrecedente) {
+//    if (noeud != NULL) {
+//        // affiche les mots du sous-arbre gauche (mots inférieurs)
+//        if (noeud->filsGauche != NULL) {
+//            afficherMots(noeud->filsGauche, premiereLettrePrecedente);
+//        }
+//
+//        if (tolower(noeud->mot[0]) != tolower(premiereLettrePrecedente)) {
+//            printf("\n\n%c", toupper(noeud->mot[0]));  // convertit la lettre en majuscule pour l'affichage
+//            premiereLettrePrecedente = noeud->mot[0];
+//        }
+//
+//        // affiche le mot courant et ses informations
+//        printf("\n|-- %s", noeud->mot);
+//        afficherPositions(noeud->listePositions);
+//
+//        // affiche les mots du sous-arbre droit (mots supérieurs)
+//        if (noeud->filsDroit != NULL) {
+//            afficherMots(noeud->filsDroit, premiereLettrePrecedente);
+//        }
+//    }
+//}
 
 
 void afficherPositions(T_Position *listeP) {
@@ -269,3 +278,23 @@ void afficherPositions(T_Position *listeP) {
     printf("\n|");
 }
 
+T_Noeud *rechercherMot(T_Index index, char *mot) {
+    if (!mot) {
+        printf("\nErreur rechercherMot(): mot pas defini");
+        return NULL;
+    }
+
+    T_Noeud *racine = index.racine;
+    while (racine) {
+        int comparaison = strcmpSansCasse(racine->mot, mot);
+        if (comparaison == 0) {
+            return racine;
+        } else if (comparaison > 0) {
+            racine = racine->filsGauche;/**/
+        } else {
+            racine = racine->filsDroit;
+        }
+    }
+
+    return NULL;  // si le mot n'a pas été trouvé
+}

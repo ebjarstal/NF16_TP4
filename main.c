@@ -13,6 +13,7 @@ void test() {
     index.racine = NULL;
     index.nbMotsDistincts = 0;
     index.nbMotsTotal = 0;
+    char *motCherche = "tonton";
 
     char filename[] = "/Users/ericb/Desktop/NF16_TP4/texte.txt";
     int result = indexerFichier(&index, filename);
@@ -25,11 +26,17 @@ void test() {
     printf("\nNombre total de mots : %d", result);
     printf("\nNombre de mots distincts : %d", index.nbMotsDistincts);
     printf("\nIndexation terminée.");
+    T_Noeud *resultatRechercheMot = rechercherMot(index, motCherche);
+    if (resultatRechercheMot) {
+        printf("\n%s trouve. %d occurrences", motCherche, resultatRechercheMot->nbOccurrences);
+    }
+    else {printf("\n%s pas trouve.", motCherche);}
     afficherIndex(index);
 }
 
 
 int main() {
     test();
+    printf("\n%d", strcmpSansCasse("sappelle", "simon"));
     return 0;
 }
