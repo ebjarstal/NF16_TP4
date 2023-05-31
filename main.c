@@ -37,6 +37,6 @@ void test() {
 
 int main() {
     test();
-    printf("\n%d", strcmpSansCasse("sappelle", "simon"));
+    printf("\n%d", strcmpSansCasse("sappelle", "Simon"));
     return 0;
 }

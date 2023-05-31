@@ -190,15 +190,26 @@ int indexerFichier(T_Index *index, char *filename) {
 
     c = fgetc(fichier);
     while (c != EOF) {
+        char tmp = fgetc(fichier);
+        if (tmp == EOF) {
+            mot[tailleMot] = c;
+            mot[tailleMot+1] = '\0';
+            ajouterOccurence(index, mot, numLigne, ordre, numPhrase);
+            // printf("\najout de %s a index", mot);
+            return nbMots+1;
+        }
+        ungetc(tmp, fichier);
+
         if (c == '\n' || c == ' ' || c == '.') {  // si on a terminé un mot
             mot[tailleMot] = '\0';
             if (mot[0] != '\0') {
-                printf("\najout de %s a index", mot);
+                // printf("\najout de %s a index", mot);
                 ajouterOccurence(index, mot, numLigne, ordre, numPhrase);
                 nbMots++;
             }
             ordre++;
             tailleMot = 0;
+            if (tmp == EOF) {return nbMots;}
         } else if (isalpha(c)) {  // si c'est une lettre
             mot[tailleMot] = c;
             tailleMot++;
@@ -236,12 +247,12 @@ void afficherIndex(T_Index index) {
         printf("\nErreur afficherIndex(): index vide");
         return;
     }
-    T_Noeud *noeud = index.racine;
-    while (noeud->filsGauche) {
-        noeud = noeud->filsGauche;
-    }
-    printf("\n%c", toupper(noeud->mot[0]));
-    afficherMots(index.racine, &noeud->mot[0]);
+//    T_Noeud *noeud = index.racine;
+//    while (noeud) {
+//        printf("\n%s", noeud->mot);
+//        noeud = noeud->filsGauche;
+//    }
+    afficherMots(index.racine, &index.racine->mot[0]);
 }
 
 //void afficherMots(T_Noeud *noeud, char premiereLettrePrecedente) {
