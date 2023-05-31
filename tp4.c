@@ -255,7 +255,7 @@ void afficherIndex(T_Index index) {
     afficherMots(index.racine, &index.racine->mot[0]);
 }
 
-//void afficherMots(T_Noeud *noeud, char premiereLettrePrecedente) {
+//void afficherMots(T_Noeud *noeud, char premiereLettrePrecedente) { test
 //    if (noeud != NULL) {
 //        // affiche les mots du sous-arbre gauche (mots inférieurs)
 //        if (noeud->filsGauche != NULL) {
