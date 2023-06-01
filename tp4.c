@@ -26,6 +26,7 @@ T_Position *creerPosition(int ligne, int ordre, int phrase) {
     T_Position *nouvellePosition = malloc(sizeof(T_Position));
     if (!nouvellePosition) {
         printf("\nErreur creation nouvelle instance T_Position");
+        free(nouvellePosition);
         return NULL;
     }
 
@@ -42,6 +43,7 @@ T_Noeud *creerNoeud(char* mot) {
     T_Noeud *nouveauNoeud = malloc(sizeof(T_Noeud));
     if (!nouveauNoeud) {
         printf("\nErreur creation nouvelle instance T_Noeud");
+        free(nouveauNoeud);
         return NULL;
     }
 
@@ -60,14 +62,68 @@ T_Noeud *creerNoeud(char* mot) {
     return nouveauNoeud;
 }
 
-T_Index creerIndexTemporaire(T_Noeud* racine, int nbMotsDistincts, int nbMotsTotal) {
-    T_Index nouveauIndex;
-    nouveauIndex.racine = racine;
-    nouveauIndex.nbMotsDistincts = nbMotsDistincts;
-    nouveauIndex.nbMotsTotal = nbMotsTotal;
-
-    return nouveauIndex;
+T_Mot *creerMot(char *mot, T_Position *position) {
+    T_Mot *nouveauMot = malloc(sizeof(T_Mot));
+    if (!nouveauMot) {
+        printf("\nErreur creerMot(): allocation memoire echouee");
+        free(nouveauMot);
+        return NULL;
+    }
+    nouveauMot->mot = strdup(mot);
+    nouveauMot->position = position;
+    nouveauMot->suivant = NULL;
+    return nouveauMot;
 }
+
+T_Phrase *creerPhrase() {
+    T_Phrase *nouvellePhrase = malloc(sizeof(T_Phrase));
+    if (!nouvellePhrase) {
+        printf("\nErreur creerPhrase(): allocation memoire echouee");
+        free(nouvellePhrase);
+        return NULL;
+    }
+    nouvellePhrase->listeMots = NULL;
+    nouvellePhrase->suivante = NULL;
+    return nouvellePhrase;
+}
+
+T_Phrase *ajouterMot(T_Mot *mot, T_Phrase *phrase) {
+    if (!phrase) {
+        printf("\nErreur ajouterMot(): phrase non definie");
+        return NULL;
+    }
+
+    if (!phrase->listeMots) {
+        phrase->listeMots = mot;
+    } else {
+        T_Mot *motCourant = phrase->listeMots;
+        while (motCourant->suivant) {
+            motCourant = motCourant->suivant;
+        }
+        motCourant->suivant = mot;
+    }
+
+    return phrase;
+}
+
+void afficherPhrase(T_Phrase *phrase) {
+    if (!phrase) {
+        printf("\nErreur afficherPhrase(): phrase non definie");
+        return;
+    }
+    T_Mot *motCourant = phrase->listeMots;
+    if (motCourant) {
+        printf(" %c", toupper(motCourant->mot[0]));
+        printf("%s", motCourant->mot + 1);
+        motCourant = motCourant->suivant;
+    }
+    while (motCourant) {
+        printf(" %s", motCourant->mot);
+        motCourant = motCourant->suivant;
+    }
+    printf(".");
+}
+
 
 T_Position *ajouterPosition(T_Position *listeP, int ligne, int ordre, int phrase) {
     T_Position *premierElement = listeP;
@@ -179,6 +235,7 @@ int indexerFichier(T_Index *index, char *filename) {
     int nbMots = 0, numLigne = 1, ordre = 1, numPhrase = 1, tailleMot = 0;
     char mot[TAILLE_MAX_MOT];
     char c, suivant;
+    T_Phrase *phraseCourante = index->listePhrases;
 
     FILE *fichier;
     fichier = fopen(filename, "r");
@@ -187,7 +244,7 @@ int indexerFichier(T_Index *index, char *filename) {
         printf("\nErreur indexerFichier(): %s n'a pas pu être ouvert", filename);
         return -1;
     }
-
+//    printf("\nici1");
     c = fgetc(fichier);
     while (c != EOF) {
         char tmp = fgetc(fichier);
@@ -195,6 +252,8 @@ int indexerFichier(T_Index *index, char *filename) {
             mot[tailleMot] = c;
             mot[tailleMot+1] = '\0';
             ajouterOccurence(index, mot, numLigne, ordre, numPhrase);
+//            printf("\nici3");
+            phraseCourante = ajouterMot(creerMot(mot, creerPosition(numLigne, ordre, numPhrase)), phraseCourante);
             // printf("\najout de %s a index", mot);
             return nbMots+1;
         }
@@ -205,11 +264,12 @@ int indexerFichier(T_Index *index, char *filename) {
             if (mot[0] != '\0') {
                 // printf("\najout de %s a index", mot);
                 ajouterOccurence(index, mot, numLigne, ordre, numPhrase);
+//                printf("\nici2");
+                phraseCourante = ajouterMot(creerMot(mot, creerPosition(numLigne, ordre, numPhrase)), phraseCourante);
                 nbMots++;
             }
             ordre++;
             tailleMot = 0;
-            if (tmp == EOF) {return nbMots;}
         } else if (isalpha(c)) {  // si c'est une lettre
             mot[tailleMot] = c;
             tailleMot++;
@@ -233,6 +293,11 @@ int indexerFichier(T_Index *index, char *filename) {
             ordre = 1;
         }
 
+        if (c == '.') {
+            phraseCourante->suivante = creerPhrase();
+            phraseCourante = phraseCourante->suivante;
+        }
+
         c = fgetc(fichier);
     }
 
@@ -242,17 +307,18 @@ int indexerFichier(T_Index *index, char *filename) {
 }
 
 
-void afficherIndex(T_Index index) {
-    if (index.racine == NULL) {
+void afficherIndex(T_Index *index) {
+    if (index->racine == NULL) {
         printf("\nErreur afficherIndex(): index vide");
         return;
     }
+    T_Index *nouveauIndex = index;
 //    T_Noeud *noeud = index.racine;
 //    while (noeud) {
 //        printf("\n%s", noeud->mot);
 //        noeud = noeud->filsGauche;
 //    }
-    afficherMots(index.racine, &index.racine->mot[0]);
+    afficherMots(nouveauIndex->racine, &nouveauIndex->racine->mot[0]);
 }
 
 //void afficherMots(T_Noeud *noeud, char premiereLettrePrecedente) { test
@@ -289,23 +355,156 @@ void afficherPositions(T_Position *listeP) {
     printf("\n|");
 }
 
-T_Noeud *rechercherMot(T_Index index, char *mot) {
+T_Noeud *rechercherMot(T_Index *index, char *mot) {
     if (!mot) {
         printf("\nErreur rechercherMot(): mot pas defini");
         return NULL;
     }
 
-    T_Noeud *racine = index.racine;
+    T_Noeud *racine = index->racine;
     while (racine) {
-        int comparaison = strcmpSansCasse(racine->mot, mot);
+
+        char *mot_tmp;
+        mot_tmp = strdup(mot);
+        for (int i = 0; mot_tmp[i]; i++) {
+            mot_tmp[i] = tolower(mot_tmp[i]);
+        }
+
+        char *mot_noeud_tmp;
+        mot_noeud_tmp = strdup(racine->mot);
+        for (int i = 0; mot_noeud_tmp[i]; i++) {
+            mot_noeud_tmp[i] = tolower(mot_noeud_tmp[i]);
+        }
+
+        int comparaison = strcmpSansCasse(mot_tmp, mot_noeud_tmp);
+
         if (comparaison == 0) {
             return racine;
-        } else if (comparaison > 0) {
-            racine = racine->filsGauche;/**/
+        } else if (comparaison < 0) {
+            racine = racine->filsGauche;
         } else {
             racine = racine->filsDroit;
         }
     }
+    return NULL;
+}
 
-    return NULL;  // si le mot n'a pas été trouvé
+
+void afficherOccurrencesMot(T_Index *index, char *mot) {
+    if (!index || !mot) {
+        printf("\nErreur afficherOccurrencesMot(): index ou mot non défini");
+        return;
+    }
+
+    int nbOccurrences = 0;
+
+    printf("\nMot = \"%s\"", mot);
+
+    T_Phrase *phraseCourante = index->listePhrases;
+    while (phraseCourante) {
+
+        T_Mot *motCourant = phraseCourante->listeMots;
+        while (motCourant) {
+
+            char *mot_tmp;
+            mot_tmp = strdup(mot);
+            for (int i = 0; mot_tmp[i]; i++) {
+                mot_tmp[i] = tolower(mot_tmp[i]);
+            }
+
+            char *mot_noeud_tmp;
+            mot_noeud_tmp = strdup(motCourant->mot);
+            for (int i = 0; mot_noeud_tmp[i]; i++) {
+                mot_noeud_tmp[i] = tolower(mot_noeud_tmp[i]);
+            }
+
+            int comparaison = strcmpSansCasse(mot_tmp, mot_noeud_tmp);
+            if (comparaison == 0) {
+                nbOccurrences++;
+            }
+
+            motCourant = motCourant->suivant;
+        }
+
+        phraseCourante = phraseCourante->suivante;
+    }
+    printf("\nOccurrences = %d", nbOccurrences);
+
+    phraseCourante = index->listePhrases;
+    while (phraseCourante) {
+
+        T_Mot *motCourant = phraseCourante->listeMots;
+        while (motCourant) {
+
+            char *mot_tmp;
+            mot_tmp = strdup(mot);
+            for (int i = 0; mot_tmp[i]; i++) {
+                mot_tmp[i] = tolower(mot_tmp[i]);
+            }
+
+            char *mot_noeud_tmp;
+            mot_noeud_tmp = strdup(motCourant->mot);
+            for (int i = 0; mot_noeud_tmp[i]; i++) {
+                mot_noeud_tmp[i] = tolower(mot_noeud_tmp[i]);
+            }
+
+            int comparaison = strcmpSansCasse(mot_tmp, mot_noeud_tmp);
+            if (comparaison == 0) {
+                printf("\n| Ligne %d, mot %d :", motCourant->position->numeroLigne, motCourant->position->ordre);
+                afficherPhrase(phraseCourante);
+            }
+
+            motCourant = motCourant->suivant;
+        }
+
+        phraseCourante = phraseCourante->suivante;
+    }
+}
+
+void construireTexte(T_Index index, char *filename) {
+
+    int ligne = 1, phrase = 1;
+
+    FILE *fichier = fopen(filename, "w");
+    if (!fichier) {
+        printf("\nErreur construireTexte(): fichier a pas pu etre cree / ouvert");
+        return;
+    }
+
+    T_Phrase *phraseCourante = index.listePhrases;
+    while (phraseCourante) {
+
+        T_Mot *motCourant = phraseCourante->listeMots;
+        if (motCourant) {
+            fputc(toupper(motCourant->mot[0]), fichier);
+            fputs(motCourant->mot + 1, fichier);
+            motCourant = motCourant->suivant;
+        }
+        while (motCourant) {
+
+            if (motCourant->position->numeroLigne == ligne + 1) {
+                fputc('\n', fichier);
+                ligne++;
+            }
+            else {
+                fputc(' ', fichier);
+            }
+            fputs(motCourant->mot, fichier);
+
+            motCourant = motCourant->suivant;
+        }
+        fputs(". ", fichier);
+
+        phraseCourante = phraseCourante->suivante;
+    }
+
+    fclose(fichier);
+
+    printf("\nFichier texte cree avec succes");
+}
+
+
+void clear_input_buffer() {
+    int c;
+    while ((c = getchar()) != '\n' && c != EOF) {}
 }
